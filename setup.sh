@@ -22,9 +22,17 @@ unzip SuperMarioBros.zip
 rm SuperMarioBros.zip
 mv 'Super Mario Bros. (Japan, USA).nes' roms/SuperMarioBros.nes
 
+# copy savestate file to fceux(s) folder(s)
+if [ ! `which fceux` ]; then
+	echo 'Please install fceux for your distribution (e.g. apt-get install fceux)'
+	exit 0
+else
+	cp roms/SuperMarioBros.fc0 ~/.fceux/fcs
+	cp roms/SuperMarioBros.fc0 ./fceux/fcs
+fi
+
 echo 'Do you want to run the test now? [y/N]'
 read -n 1 answer
 if [ $answer == 'y' ]; then
 	wine fceux/fceux.exe -lua test.lua roms/SuperMarioBros.nes
 fi
-
