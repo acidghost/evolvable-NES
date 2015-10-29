@@ -9,3 +9,4 @@ To use the graphical components (iup) in fceux you'll need to install them manua
 1. [SMB RAM map](http://datacrystal.romhacking.net/wiki/Super_Mario_Bros.:RAM_map)
 2. [MarI/O - Machine Learning for Video Games (video)](https://youtu.be/qv6UVOQ0F44)
 3. [MarI/O (code)](http://pastebin.com/ZZmSNaHX)
+4. [CMS-ES implementation in Matlab/Octave](https://www.lri.fr/~hansen/purecmaes.m)
