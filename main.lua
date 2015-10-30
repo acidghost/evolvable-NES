@@ -46,7 +46,7 @@ net:setWeights(offspring[currentOffspring].genome)
 framecounter = 0
 
 while true do
-	-- emu.speedmode('normal')
+	emu.speedmode('turbo')
 	local mario = Inputs.getMario()
 	local marioScore = Inputs.getMarioScore() + mario.x + (mario.x > EndLevel and EndLevelBonus or 0)
 
@@ -65,10 +65,15 @@ while true do
 
 		if currentOffspring > Lambda then
 			print('Ended GENERATION!')
-		else
-			net:setWeights(offspring[currentOffspring].genome)
-			savestate.load(State)
+			local stats = cmaes:endGeneration()
+			print('Best fit: ' .. stats.maxFit)
+
+			offspring = cmaes:generateOffspring()
+			currentOffspring = 1
 		end
+
+		net:setWeights(offspring[currentOffspring].genome)
+		savestate.load(State)
 	else
 		local sprites = Inputs.getSprites()
 

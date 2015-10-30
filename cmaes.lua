@@ -52,6 +52,20 @@ do
 		self.offspring[offspringID].fitness = fitness
 	end
 
+	function CMAES:endGeneration()
+		local fitnesses = _.map(self.offspring, function(k, v) return v.fitness or 0 end)
+		local fitnessTensor = torch.Tensor(fitnesses)
+		local sorted, sortedIndexes = fitnessTensor:sort(1, true)
+		sortedIndexes = sortedIndexes:reshape(self.lambda, 1)
+		self.xold = self.xmean
+
+		local genomes = _.map(self.offspring, function(k, v) return v.genome:totable() end)
+		local selected = torch.Tensor(genomes):index(1, sortedIndexes[{ {1, self.mu}, 1 }]):reshape(self.genomeSize, self.mu)
+		self.xmean = selected * self.weights
+
+		return { maxFit = torch.max(fitnessTensor) }
+	end
+
 end
 
 return CMAES

@@ -24,7 +24,7 @@ do
 	end
 
 	function NeuralNetwork:setWeights(weights)
-		weights = weights:t()
+		weights = weights:reshape(weights:size(1), 1):t()
 
 		local weightsHid = weights:sub(1, 1, 1, self.nhidden * self.nin):reshape(self.nhidden, self.nin)
 		-- nhidden x nin
