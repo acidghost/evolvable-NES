@@ -60,16 +60,45 @@ do
 		return sprites
 	end
 
-	function Inputs.getExtendedSprites()
-		return {}
+	function Inputs.getMarioScore()
+		-- 0x07DD-0x07E2	Mario score (1000000 100000 10000 1000 100 10)
+		local addresses = torch.range(0x7DD, 0x7E2)
+		local scores = { 1000000, 100000, 10000, 1000, 100, 10 }
+		local score = 0
+		-- FIXME!
+		for i = 1, addresses:size()[1] do
+			score = score + (scores[i] * memory.readbyte(addresses[i]))
+		end
+
+		return score
 	end
 
+	function Inputs.getMarioState()
+		-- 0x000E	Player's state
+		local states = { 
+			'Leftmost of screen',
+			'Climbing vine',
+			'Entering reversed-L pipe',
+			'Going down a pipe',
+			'Autowalk',
+			'Autowalk',
+			'Player dies',
+			'Entering area',
+			'Normal',
+			'Cannot move',
+			--' ',
+			'Dying',
+			'Palette cycling, can\'t move'
+		}
+		local stateCode = memory.readbyte(0xE)
+
+		return states[stateCode]
+	end
 
 	function Inputs.getInputs()
 		local mario = Inputs.getMario()
 		
 		sprites = Inputs.getSprites()
-		extended = Inputs.getExtendedSprites()
 		
 		local inputs = {}
 		
@@ -86,14 +115,6 @@ do
 					local distx = math.abs(sprites[i].x - (mario.x + dx))
 					local disty = math.abs(sprites[i].y - (mario.y + dy))
 					if distx <= 8 and disty <= 8 then
-						inputs[#inputs] = -1
-					end
-				end
-
-				for i = 1,#extended do
-					local distx = math.abs(extended[i].x - (mario.x + dx))
-					local disty = math.abs(extended[i].y - (mario.y + dy))
-					if distx < 8 and disty < 8 then
 						inputs[#inputs] = -1
 					end
 				end

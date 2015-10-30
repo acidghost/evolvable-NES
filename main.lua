@@ -4,6 +4,7 @@ require 'rnn'
 utils = require './utils'
 Inputs = require './inputs'
 NeuralNetwork = require './network'
+CMAES = require './cmaes'
 
 StateNumber = 1
 State = savestate.create(StateNumber)
@@ -15,7 +16,9 @@ LeftMargin = 10
 TopMargin = 40
 LineHeight = 10
 MaxDistance = 255
-MaxEvaluations = 400
+MaxEvaluations = 500
+EndLevel = 3000
+EndLevelBonus = 1000
 
 ButtonNames = {
 	"A",
@@ -31,20 +34,42 @@ Nhidden = 2
 Noutputs = 3
 net = NeuralNetwork(Ninputs, Nhidden, Noutputs)
 
-GenomeSize = Ninputs * Nhidden + Nhidden * Noutputs
--- cmaes = CMAES(GenomeSize, 100)
--- offspring = cmaes:generateOffspring()
--- currentOff = 1
+--			|hidden weights| + |hidden bias| + |out weights| + |out bias|
+GenomeSize = Nhidden * Ninputs + Nhidden + Noutputs * Nhidden + Noutputs
+cmaes = CMAES(GenomeSize, 100)
+Lambda = cmaes.lambda
+offspring = cmaes:generateOffspring()
+currentOffspring = 1
+
+net:setWeights(offspring[currentOffspring].genome)
 
 framecounter = 0
 
 while true do
-	if framecounter > MaxEvaluations then
-		savestate.load(State)
+	-- emu.speedmode('normal')
+	local mario = Inputs.getMario()
+	local marioScore = Inputs.getMarioScore() + mario.x + (mario.x > EndLevel and EndLevelBonus or 0)
+
+	local marioState = Inputs.getMarioState()
+	local marioDead = marioState == 'Dying' or marioState == 'Player dies'
+
+	if framecounter > MaxEvaluations or marioDead then
+		if marioDead then print('Mario\'s dead... :(') end
+
+		cmaes:setFitness(currentOffspring, marioScore)
+
+		print('Evaluated offspring ' .. currentOffspring .. ' with score of ' .. marioScore .. ' ended in ' .. mario.x)
+
 		framecounter = 0
-		net:reset()
+		currentOffspring = currentOffspring + 1
+
+		if currentOffspring > Lambda then
+			print('Ended GENERATION!')
+		else
+			net:setWeights(offspring[currentOffspring].genome)
+			savestate.load(State)
+		end
 	else
-		local mario = Inputs.getMario()
 		local sprites = Inputs.getSprites()
 
 		-- local inputs = Inputs.getInputs()
@@ -59,12 +84,11 @@ while true do
 		tDistances = tDistances:div(MaxDistance)
 
 		local output = net:feed(tDistances)
-		local padInput = joypad.get(Player)
 		joypad.set(Player, { right = (output[1][1] > 0), left = (output[1][2] > 0), A = (output[1][3] > 0) })
 
 		gui.text(LeftMargin, TopMargin, 'Mario ' .. (mario and string.format('%d, %d', mario.x, mario.y) or 'NaN'))
 		for i = 1, MaxEnemies do
-			local text = sprites[i] and string.format('%d, %d, %d', sprites[i].x, sprites[i].y, tDistances[1][i]) or 'NaN'
+			local text = sprites[i] and string.format('%d, %d, %.3f', sprites[i].x, sprites[i].y, tDistances[1][i]) or 'NaN'
 			gui.text(LeftMargin, TopMargin + (i*LineHeight), 'Sprite' .. i .. ' ' .. text)
 		end
 

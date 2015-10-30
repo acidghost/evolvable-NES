@@ -37,13 +37,19 @@ do
 	function CMAES:generateOffspring()
 		local offspring = {}
 		for k = 1, self.lambda do
-			local newOffspring = self.xmean + self.B:mul(self.sigma) * (self.D:cmul(torch.randn(self.genomeSize, 1)))
+			local newOffspring = {}
+			newOffspring.genome = self.xmean + self.B:mul(self.sigma) * (self.D:cmul(torch.randn(self.genomeSize, 1)))
+			newOffspring.fitness = false
 			table.insert(offspring, newOffspring)
 		end
 
 		self.offspring = offspring
 
 		return offspring
+	end
+
+	function CMAES:setFitness( offspringID, fitness )
+		self.offspring[offspringID].fitness = fitness
 	end
 
 end
