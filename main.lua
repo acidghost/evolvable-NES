@@ -14,6 +14,7 @@ Player = 1
 MaxEnemies = 5
 LeftMargin = 10
 TopMargin = 40
+BottomMargin = 230
 LineHeight = 10
 MaxDistance = 255
 MaxEvaluations = 500
@@ -40,6 +41,7 @@ cmaes = CMAES(GenomeSize, 100)
 Lambda = cmaes.lambda
 offspring = cmaes:generateOffspring()
 currentOffspring = 1
+generationCount = 1
 
 net:setWeights(offspring[currentOffspring].genome)
 
@@ -53,6 +55,9 @@ while true do
 	local marioState = Inputs.getMarioState()
 	local marioDead = marioState == 'Dying' or marioState == 'Player dies'
 
+	gui.text(LeftMargin, BottomMargin - 3*LineHeight, 'Generation: ' .. generationCount)
+	gui.text(LeftMargin, BottomMargin - 2*LineHeight, 'Individual: ' .. currentOffspring)
+
 	if framecounter > MaxEvaluations or marioDead then
 		if marioDead then print('Mario\'s dead... :(') end
 
@@ -64,12 +69,13 @@ while true do
 		currentOffspring = currentOffspring + 1
 
 		if currentOffspring > Lambda then
-			print('Ended GENERATION!')
+			print('Ended GENERATION! (' .. generationCount .. ')')
 			local stats = cmaes:endGeneration()
 			print('Best fit: ' .. stats.maxFit)
 
 			offspring = cmaes:generateOffspring()
 			currentOffspring = 1
+			generationCount = generationCount + 1
 		end
 
 		net:setWeights(offspring[currentOffspring].genome)
