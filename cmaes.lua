@@ -2,9 +2,8 @@ do
 	
 	local CMAES = torch.class('CMAES')
 
-	function CMAES:__init( genomeSize, maxGenerations, initialSigma )
+	function CMAES:__init( genomeSize, initialSigma )
 		self.genomeSize = genomeSize
-		self.maxGenerations = maxGenerations
 		self.sigma = initialSigma or 0.5
 		self.xmean = torch.rand(genomeSize, 1)
 
@@ -91,7 +90,7 @@ do
 			self.invsqrtC = self.B * self.D:pow(-1):diag() * self.B:t()
 		end
 
-		return { maxFit = torch.max(fitnessTensor) }
+		return { best = self.offspring[sortedIndexes[{1,1}]] }
 	end
 
 end

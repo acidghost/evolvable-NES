@@ -17,7 +17,8 @@ TopMargin = 40
 BottomMargin = 230
 LineHeight = 10
 MaxDistance = 255
-MaxEvaluations = 500
+MaxTime = 400
+MaxEvaluations = 1000
 EndLevel = 3000
 EndLevelBonus = 1000
 
@@ -31,13 +32,14 @@ ButtonNames = {
 }
 
 Ninputs = 5
-Nhidden = 2
+Nhidden = 4
 Noutputs = 3
 net = NeuralNetwork(Ninputs, Nhidden, Noutputs)
 
 --			|hidden weights| + |hidden bias| + |out weights| + |out bias|
 GenomeSize = Nhidden * Ninputs + Nhidden + Noutputs * Nhidden + Noutputs
-cmaes = CMAES(GenomeSize, 100)
+MaxGenerations = 100
+cmaes = CMAES(GenomeSize)
 Lambda = cmaes.lambda
 offspring = cmaes:generateOffspring()
 currentOffspring = 1
@@ -45,12 +47,13 @@ generationCount = 1
 
 net:setWeights(offspring[currentOffspring].genome)
 
+GenerationStats = {}
+
 framecounter = 0
 
 while true do
 	emu.speedmode('turbo')
 	local mario = Inputs.getMario()
-	local marioScore = Inputs.getMarioScore() + mario.x + (mario.x > EndLevel and EndLevelBonus or 0)
 
 	local marioState = Inputs.getMarioState()
 	local marioDead = marioState == 'Dying' or marioState == 'Player dies'
@@ -59,19 +62,33 @@ while true do
 	gui.text(LeftMargin, BottomMargin - 2*LineHeight, 'Individual: ' .. currentOffspring)
 
 	if framecounter > MaxEvaluations or marioDead then
-		if marioDead then print('Mario\'s dead... :(') end
+		local marioScore = Inputs.getMarioScore() + mario.x + (mario.x > EndLevel and EndLevelBonus or 0)
+		local gameTime = Inputs.getTime()
 
-		cmaes:setFitness(currentOffspring, marioScore)
+		local fitness = marioScore + (MaxTime - gameTime)
 
-		print('Evaluated offspring ' .. currentOffspring .. ' with score of ' .. marioScore .. ' ended in ' .. mario.x)
+		-- if marioDead then print('Mario\'s dead... :(') end
+
+		cmaes:setFitness(currentOffspring, fitness)
+
+		-- print('Evaluated offspring ' .. currentOffspring .. ' with fitness of ' .. fitness .. ' ended in ' .. mario.x)
 
 		framecounter = 0
 		currentOffspring = currentOffspring + 1
 
 		if currentOffspring > Lambda then
-			print('Ended GENERATION! (' .. generationCount .. ')')
 			local stats = cmaes:endGeneration()
-			print('Best fit: ' .. stats.maxFit)
+			print('Best fit (' .. generationCount .. '): ' .. stats.best.fitness)
+
+			table.insert(GenerationStats, stats)
+
+			if generationCount == MaxGenerations then
+				_.each(GenerationStats, function(k, v)
+					print(string.format('%.4f', v.best.fitness))
+					print(v.best.genome)
+				end)
+				os.exit()
+			end
 
 			offspring = cmaes:generateOffspring()
 			currentOffspring = 1

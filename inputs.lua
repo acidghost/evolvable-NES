@@ -95,6 +95,18 @@ do
 		return states[stateCode]
 	end
 
+	function Inputs.getTime()
+		-- 0x07F8/A	Digits of time (100 10 1)
+		local addresses = torch.range(0x7F8, 0x7FA)
+		local digits = { 100, 10, 1 }
+		local time = 0
+		for i = 1, addresses:size(1) do
+			time = time + (digits[i] * memory.readbyte(addresses[i]))
+		end
+
+		return time
+	end
+
 	function Inputs.getInputs()
 		local mario = Inputs.getMario()
 		
