@@ -2,9 +2,6 @@ do
 	
 	local Inputs = torch.class('Inputs')
 
-	local BoxRadius = 6
-	local InputSize = (BoxRadius*2+1)*(BoxRadius*2+1)
-
 	function Inputs.getMario()
 		local marioX = memory.readbyte(0x6D) * 0x100 + memory.readbyte(0x86)
 		local marioY = memory.readbyte(0x03B8)+16
@@ -23,17 +20,35 @@ do
 		local subx = math.floor((x%256)/16)
 		local suby = math.floor((y - 32)/16)
 		-- 0x0500-0x069F	Current tile
+		-- From top to bottom and left to right 
+		-- terrain is at 0x5B0-0x5CF and 0x680-0x69F (two rows)
+		-- 0x500-0x5DF First screen 16x13
+		-- 0x5E0-0x69F Second screen 16x13
 		local addr = 0x500 + page*13*16+suby*16+subx
-			
+
 		if suby >= 13 or suby < 0 then
-			return 0
+			return -1
 		end
 			
-		if memory.readbyte(addr) ~= 0 then
+		local tileContent = memory.readbyte(addr)
+		if tileContent ~= 0 then
 			return 1
 		else
-			return 0
+			return -1
 		end
+	end
+
+	function Inputs.getTiles(radius, mario)
+		mario = mario or Inputs.getMario()
+		local tiles = {}
+
+		for dx = -radius * 16, radius * 16, 16 do
+			for dy = -radius * 16, radius * 16, 16 do
+				tiles[#tiles+1] = Inputs.getTile(dx, dy, mario)
+			end
+		end
+
+		return tiles
 	end
 
 	function Inputs.getSprites()
